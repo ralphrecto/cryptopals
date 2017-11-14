@@ -31,8 +31,8 @@ pub fn challenge3() -> () {
     let printable_word_and_keys: Vec<(Vec<u8>, u8)> = (0..255).map(|b: u8| {
         let word: Vec<u8> = v.iter().map(|x| x ^ b).collect();
         (word, b)
-    }).filter(|word_and_key| {
-        (&word_and_key.0).iter().all(|&x| 0x20u8 <= x && x <= 0x7eu8)
+    }).filter(|&(ref word, key)| {
+        word.iter().all(|&x| 0x20u8 <= x && x <= 0x7eu8)
     }).collect();
 
     for (raw_word, score) in printable_word_and_keys {
