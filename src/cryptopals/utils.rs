@@ -10,7 +10,7 @@ pub fn hex_to_nibble(s: char) -> u8 {
 
 /// Convert a nibble to a hex char. Panics if the given byte does not contain
 /// a nibble (i.e. outside of decimal range [0, 15]).
-pub fn byte_to_nibble(b: u8) -> char {
+pub fn nibble_to_hex(b: u8) -> char {
     match b {
         // U+0030 = '0'
         0...9 => (0x30 + b) as char,
@@ -40,12 +40,12 @@ pub fn hexstr_to_bytevec(s: &str) -> Vec<u8> {
         .collect();
 }
 
-/// Convert a vector of bytes into a string.
-pub fn bytevec_to_hexstr(v: Vec<u8>) -> String {
-    return v.into_iter()
-        .flat_map(|b: u8| {
-            let upper_nibble = b >> 4;
-            let lower_nibble = b & 0x0f;
-            vec![byte_to_nibble(upper_nibble), byte_to_nibble(lower_nibble)]
-        }).collect();
+/// Convert a vector of bytes into a string of hex chars.
+pub fn bytevec_to_hexstr(v: &Vec<u8>) -> String {
+    let mut acc_string: String = String::from("");
+    for byte in v {
+        acc_string.push(nibble_to_hex(byte >> 4));
+        acc_string.push(nibble_to_hex(byte & 0x0f));
+    }
+    return acc_string;
 }

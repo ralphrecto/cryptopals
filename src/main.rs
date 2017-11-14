@@ -8,6 +8,7 @@ mod cryptopals {
 fn cryptomain() -> () {
     cryptopals::set1::challenge1();
     cryptopals::set1::challenge2();
+    cryptopals::set1::challenge3();
 }
 
 fn main() -> () {

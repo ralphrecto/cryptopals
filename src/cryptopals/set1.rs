@@ -17,6 +17,31 @@ pub fn challenge2() -> () {
         .map(|(b1, b2)| b1 ^ b2)
         .collect();
 
-    let fin: String = utils::bytevec_to_hexstr(xor);
+    let fin: String = utils::bytevec_to_hexstr(&xor);
     println!("{}", fin);
+}
+
+pub fn challenge3() -> () {
+    let s = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+    let v: Vec<u8> = utils::hexstr_to_bytevec(s);
+
+    // Consider xor as a byte-wise operation, so that the key is a single byte.
+    // Return all keys + their corresponding word where each char in the word is
+    // an ASCII printable char.
+    let printable_word_and_keys: Vec<(Vec<u8>, u8)> = (0..255).map(|b: u8| {
+        let word: Vec<u8> = v.iter().map(|x| x ^ b).collect();
+        (word, b)
+    }).filter(|word_and_key| {
+        (&word_and_key.0).iter().all(|&x| 0x20u8 <= x && x <= 0x7eu8)
+    }).collect();
+
+    for (raw_word, score) in printable_word_and_keys {
+        let word: String = raw_word.iter()
+            .map(|&x: &u8| x as char)
+            .collect();
+
+        println!("{}, key: {:#x}", word, score);
+    }
+
+    // TODO: form model using frequency analysis to find best, rather than eyeballing.
 }
