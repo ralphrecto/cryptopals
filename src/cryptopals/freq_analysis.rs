@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use std::ascii::AsciiExt;
 
 fn letter_freq(c: char) -> Option<f64> {
-    match c {
+    let c_prime: char = c.to_ascii_uppercase();
+    match c_prime {
         ' ' => Some(0.18288462654132653),
         'E' => Some(0.10266650371711405),
         'T' => Some(0.07516998273511516),
@@ -29,6 +31,9 @@ fn letter_freq(c: char) -> Option<f64> {
         'J' => Some(0.00097521808184139),
         'Q' => Some(0.00083675498119895),
         'Z' => Some(0.00051284690692656),
+        // TODO: account for other punctuation characters + their actual frequency.
+        // Frequencies below is fake.
+        '\'' | ',' => Some(0.001),
         _ => None
     }
 }

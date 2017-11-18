@@ -2,12 +2,25 @@ use cryptopals::utils;
 use base64;
 use cryptopals::freq_analysis;
 
+fn challenege_start(set: u8, num: u8) -> () {
+    println!("\n\n");
+    println!("Set {}, challenge {} start ===========================================", set, num);
+}
+
+fn challenege_end(set: u8, num: u8) -> () {
+    println!("Set {}, challenge {} end =============================================", set, num);
+    println!("\n\n");
+}
+
 pub fn challenge1() -> () {
+    challenege_start(1, 1);
     let s = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
     println!("{}", base64::encode(&utils::hexstr_to_bytevec(s)));
+    challenege_end(1, 1);
 }
 
 pub fn challenge2() -> () {
+    challenege_start(1, 2);
     let s1 = "1c0111001f010100061a024b53535009181c";
     let s2 = "686974207468652062756c6c277320657965";
 
@@ -20,9 +33,11 @@ pub fn challenge2() -> () {
 
     let fin: String = utils::bytevec_to_hexstr(&xor);
     println!("{}", fin);
+    challenege_end(1, 2);
 }
 
 pub fn challenge3() -> () {
+    challenege_start(1, 3);
     let s = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let v: Vec<u8> = utils::hexstr_to_bytevec(s);
 
@@ -32,8 +47,6 @@ pub fn challenge3() -> () {
     let printable_word_and_keys: Vec<(Vec<u8>, u8)> = (0..255).map(|b: u8| {
         let word: Vec<u8> = v.iter().map(|x| x ^ b).collect();
         (word, b)
-    }).filter(|&(ref word, key)| {
-        word.iter().all(|&x| 0x20u8 <= x && x <= 0x7eu8)
     }).collect();
 
     for (raw_word, key) in printable_word_and_keys {
@@ -44,9 +57,8 @@ pub fn challenge3() -> () {
             Some(score) => {
                 println!("{}, key: {:#x}, score: {}", word, key, score)
             },
-            None => {
-                println!("no score")
-            }
+            None => { }
         }
     }
+    challenege_end(1, 3);
 }
