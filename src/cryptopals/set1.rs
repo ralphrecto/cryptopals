@@ -1,5 +1,6 @@
 use cryptopals::utils;
 use base64;
+use cryptopals::freq_analysis;
 
 pub fn challenge1() -> () {
     let s = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
@@ -35,13 +36,17 @@ pub fn challenge3() -> () {
         word.iter().all(|&x| 0x20u8 <= x && x <= 0x7eu8)
     }).collect();
 
-    for (raw_word, score) in printable_word_and_keys {
+    for (raw_word, key) in printable_word_and_keys {
         let word: String = raw_word.iter()
             .map(|&x: &u8| x as char)
             .collect();
-
-        println!("{}, key: {:#x}", word, score);
+        match freq_analysis::xi_square(&word) {
+            Some(score) => {
+                println!("{}, key: {:#x}, score: {}", word, key, score)
+            },
+            None => {
+                println!("no score")
+            }
+        }
     }
-
-    // TODO: form model using frequency analysis to find best, rather than eyeballing.
 }

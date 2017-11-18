@@ -3,6 +3,7 @@ extern crate base64;
 mod cryptopals {
     pub mod set1;
     pub mod utils;
+    pub mod freq_analysis;
 }
 
 fn cryptomain() -> () {
