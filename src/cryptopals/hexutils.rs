@@ -36,7 +36,7 @@ pub fn hexstr_to_bytevec(s: &str) -> Vec<u8> {
     // and adding the pair together.
     return raw_nibbles
         .chunks(2)
-        .map(|chunk| (chunk[0] << 4) + chunk[1])
+        .map(|chunk| (chunk[0] << 4) | chunk[1])
         .collect();
 }
 
@@ -48,4 +48,18 @@ pub fn bytevec_to_hexstr(v: &Vec<u8>) -> String {
         acc_string.push(nibble_to_hex(byte & 0x0f));
     }
     return acc_string;
+}
+
+/// Consider xor as a byte-wise operation. This function takes the given string
+/// and returns all possible byte keys and the bytestring (as a string)
+/// resulting from xor-ing all of the given string's bytes with the byte key.
+pub fn bytexor_keygen(s: &str) -> Vec<(String, u8)> {
+    let s_bytevec: Vec<u8> = hexstr_to_bytevec(s);
+    (0..256).map(|b| b as u8)
+        .map(|b: u8| {
+            let word: String = s_bytevec.iter()
+                .map(|&x: &u8| (x ^ b) as char)
+                .collect();
+            (word, b)
+        }).collect()
 }
