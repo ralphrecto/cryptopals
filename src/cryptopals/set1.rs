@@ -66,3 +66,12 @@ pub fn challenge4() -> () {
 
     challenege_end(1, 4);
 }
+
+pub fn challenge5() -> () {
+    let str = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+    let str_bytes: Vec<u8> = hexutils::str_to_bytevec(str);
+    let key_bytes: Vec<u8> = hexutils::str_to_bytevec("ICE");
+    let result: Vec<u8> = hexutils::rolling_xor(&str_bytes, &key_bytes);
+
+    println!("{}", hexutils::bytevec_to_hexstr(&result));
+}

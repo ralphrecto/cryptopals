@@ -24,6 +24,14 @@ pub fn nibble_to_hex(b: u8) -> char {
     }
 }
 
+/// Convert a plaintext string into a vector of bytes. This assumes each
+/// character is ASCII.
+pub fn str_to_bytevec(s: &str) -> Vec<u8> {
+    s.chars()
+        .map(|c| { c as u8 })
+        .collect()
+}
+
 /// Convert a hex string to a vector of bytes.
 pub fn hexstr_to_bytevec(s: &str) -> Vec<u8> {
     // Directly convert each hex char to a nibble.
@@ -32,12 +40,12 @@ pub fn hexstr_to_bytevec(s: &str) -> Vec<u8> {
         .collect();
 
     // Since the nibbles are in the lower half of bytes, form a full byte
-    // from pairs of nibbles by left shifting upper one by half a byte
-    // and adding the pair together.
-    return raw_nibbles
+    // from pairs of nibbles by left shifting the upper one by half a byte
+    // and ORing the pair together.
+    raw_nibbles
         .chunks(2)
         .map(|chunk| (chunk[0] << 4) | chunk[1])
-        .collect();
+        .collect()
 }
 
 /// Convert a vector of bytes into a string of hex chars.
@@ -61,5 +69,15 @@ pub fn bytexor_keygen(s: &str) -> Vec<(String, u8)> {
                 .map(|&x: &u8| (x ^ b) as char)
                 .collect();
             (word, b)
+        }).collect()
+}
+
+/// Apply a rolling xor of v using key. The returned vector will be the same
+/// length as v.
+pub fn rolling_xor(v: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
+    v.iter()
+        .enumerate()
+        .map(|(i, byte)| {
+            *byte ^ key[i % key.len()]
         }).collect()
 }
