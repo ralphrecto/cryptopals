@@ -4,7 +4,7 @@ extern crate base64;
 pub fn hex_to_nibble(s: char) -> u8 {
     match s.to_digit(16) {
         Some(int) => int as u8,
-        None => panic!("Given char was not a hex char."),
+        None => panic!(format!("Given char {} was not a hex char.", s)),
     }
 }
 

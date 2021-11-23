@@ -51,7 +51,10 @@ pub fn chi_square(text: &str) -> Option<f64> {
             Some(_) => {
                 *(letter_to_count.entry(c).or_insert(0)) += 1;
             },
-            None => return None
+            None => {
+                // println!("no match for {}", c);
+                return None
+            }
         }
     }
 

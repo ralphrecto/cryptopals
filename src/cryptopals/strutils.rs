@@ -13,3 +13,12 @@ pub fn hamming_dist(v1: &Vec<u8>, v2: &Vec<u8>) -> u32 {
             hexutils::count_set_bits(b1 ^ b2) as u32
         }).sum()
 }
+
+#[test]
+fn test_hamming_dist() {
+    let s1 = "this is a test";
+    let s2 = "wokka wokka!!!";
+    let dist = hamming_dist(&s1.as_bytes().to_vec(), &s2.as_bytes().to_vec());
+
+    assert_eq!(38, dist);
+}
