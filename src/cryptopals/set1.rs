@@ -69,55 +69,52 @@ pub fn challenge5() -> () {
 }
 
 pub fn challenge6() -> io::Result<()> {
+    const NUM_TOP_KEYSIZES: usize = 5;
     let ciphertext= fileutils::read_file("data/set1-challenge6.txt")?;
     let decoded = base64::decode(&ciphertext.replace('\n', "")).unwrap();
 
-    let mut probable_keysize: i32 = -1;
-    let mut min_normalized_d = f64::MAX;
+    let mut keysize_scores: Vec<(i32, f64)> = Vec::with_capacity(40);
     for keysize in 2..=40 {
         let block1 = &decoded[0..keysize];
         let block2 = &decoded[keysize..keysize*2];
 
-        let block3 = &decoded[keysize*2..keysize*3];
-        let block4 = &decoded[keysize*3..keysize*4];
+        let d = hamming_dist(&block1.to_vec(), &block2.to_vec());
 
-        let d1 = hamming_dist(&block1.to_vec(), &block2.to_vec());
-        let d2 = hamming_dist(&block3.to_vec(), &block4.to_vec());
+        let normalized_d = d as f64 / keysize as f64;
+        keysize_scores.push((keysize as i32, normalized_d));
+    }
 
-        let normalized_d1 = d1 as f64 / keysize as f64;
-        let normalized_d2 = d2 as f64 / keysize as f64;
+    keysize_scores.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
-        let avg_normalized_d = (normalized_d1 + normalized_d2) / 2.0;
+    let top_keysizes = &keysize_scores[0..NUM_TOP_KEYSIZES];
 
-        println!("avg d {}, keysize {}", avg_normalized_d, keysize);
-        println!("d1 {}, keysize {}", normalized_d1, keysize);
+    // keysize -> block num -> decoded bytes
+    let mut transposed_blocks: HashMap<i32, HashMap<i32, Vec<u8>>> = HashMap::new();
+    for (probable_keysize, _) in top_keysizes {
+        transposed_blocks.insert(*probable_keysize, HashMap::new());
 
-        if normalized_d1 < min_normalized_d {
-            probable_keysize = keysize as i32;
-            min_normalized_d = normalized_d1;
+        let keysize_map = transposed_blocks.get_mut(probable_keysize).unwrap();
+        for i in 0..decoded.len() {
+            let block_i = i as i32 % *probable_keysize;
+            if !keysize_map.contains_key(&block_i) {
+                keysize_map.insert(block_i, vec![]);
+            }
+
+            let block = keysize_map.get_mut(&block_i).unwrap();
+            block.push(decoded[i]);
         }
     }
 
-    let mut transposed_blocks: HashMap<i32, Vec<u8>> = HashMap::new();
-    for i in 0..decoded.len() {
-        let block_i = i as i32 % probable_keysize;
-        if !transposed_blocks.contains_key(&block_i) {
-            transposed_blocks.insert(block_i, vec![]);
-        }
-
-        let block = transposed_blocks.get_mut(&block_i).unwrap();
-        block.push(decoded[i]);
-    }
-
-    let key: Vec<u8> = Vec::with_capacity(probable_keysize as usize);
-    for (block_i, block) in transposed_blocks {
-        let keygen_pairs = xorutils::bytexor_keygen(&block);
-        for (plaintext, keybyte) in keygen_pairs {
-            // println!("plaintext: {}", &plaintext);
-            match freq_analysis::chi_square(&plaintext) {
-                Some(chi_sq) => println!("keybyte {}, chi sq {}", keybyte, chi_sq),
-                None => {
-                    // println!("None!") // The decoded string isn't even english, so this is not the key
+    for (keysize, keysize_map) in transposed_blocks {
+        for (block_i, block) in keysize_map {
+            let keygen_pairs = xorutils::bytexor_keygen(&block);
+            for (plaintext, keybyte) in keygen_pairs {
+                // println!("plaintext: {}", &plaintext);
+                match freq_analysis::chi_square(&plaintext) {
+                    Some(chi_sq) => println!("keybyte {}, chi sq {}", keybyte, chi_sq),
+                    None => {
+                        // println!("None!") // The decoded string isn't even english, so this is not the key
+                    }
                 }
             }
         }
