@@ -7,6 +7,7 @@ mod cryptopals {
     pub mod fileutils;
     pub mod xorutils;
     pub mod strutils;
+    pub mod blockutils;
 }
 
 fn cryptomain() -> () {

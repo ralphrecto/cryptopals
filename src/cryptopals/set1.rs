@@ -5,10 +5,9 @@ use cryptopals::{
     freq_analysis,
     fileutils,
     xorutils,
-    strutils
+    strutils,
+    blockutils
 };
-
-use super::{hexutils::hex_to_nibble, strutils::hamming_dist};
 
 pub fn challenge1() -> () {
     let s = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
@@ -91,7 +90,7 @@ pub fn challenge6() -> io::Result<()> {
             let block1 = &raw_bytes[i..i+keysize];
             let block2 = &raw_bytes[i+keysize..i+(keysize*2)];
 
-            let d = hamming_dist(&block1.to_vec(), &block2.to_vec());
+            let d = strutils::hamming_dist(&block1.to_vec(), &block2.to_vec());
             let normalized_d = d as f64 / keysize as f64;
 
             hamming_dist_sum += normalized_d;
@@ -107,29 +106,20 @@ pub fn challenge6() -> io::Result<()> {
 
     // Part 2: generate transposed blocks.
     // keysize -> block num -> raw bytes
-    let mut transposed_blocks: HashMap<i32, HashMap<i32, Vec<u8>>> = HashMap::new();
+    let mut transposed_blocks: HashMap<i32, Vec<Vec<u8>>> = HashMap::new();
     for (probable_keysize, _) in top_keysizes {
-        let keysize_map = transposed_blocks
-            .entry(*probable_keysize)
-            .or_insert_with(HashMap::new);
-
-        for i in 0..raw_bytes.len() {
-            let block_i = i as i32 % *probable_keysize;
-            let block = keysize_map
-                .entry(block_i)
-                .or_insert_with(|| vec![]);
-
-            block.push(raw_bytes[i]);
-        }
+        let transposed = blockutils::transpose_blocks(&raw_bytes, *probable_keysize as usize);
+        transposed_blocks.insert(*probable_keysize, transposed);
     }
 
     // Part 3: generate most likely byte key for each transposed block.
     let mut cand_keys: HashMap<i32, Vec<u8>> = HashMap::new();
-    for (keysize, keysize_map) in transposed_blocks {
+    for (keysize, keysize_blocks) in transposed_blocks {
         let mut key: Vec<u8> = vec![0; keysize as usize];
 
-        for (block_i, block) in keysize_map {
-            let keygen_pairs = xorutils::bytexor_keygen(&block);
+        for block_i  in 0..keysize_blocks.len() {
+            let block = &keysize_blocks[block_i];
+            let keygen_pairs = xorutils::bytexor_keygen(block);
 
             let mut min_keybyte: u8 = 0;
             let mut min_score: f64 = f64::MAX;
