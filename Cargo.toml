@@ -5,3 +5,4 @@ authors = ["Ralph Recto <recto.ralph@gmail.com>"]
 
 [dependencies]
 base64 = "^0.7.0"
+aes = "^0.7.5"

@@ -1,3 +1,8 @@
+use aes::{Aes128, Block};
+use aes::cipher::{
+    BlockCipher, BlockEncrypt, BlockDecrypt, NewBlockCipher,
+    generic_array::{GenericArray, typenum::U16}
+};
 use std::{collections::HashMap, io};
 use base64;
 use cryptopals::{
@@ -150,6 +155,34 @@ pub fn challenge6() -> io::Result<()> {
 
         println!("key {:?}, unencrypted: {}", key, unencrypted);
     }
+
+    Ok(())
+}
+
+pub fn challenge7() -> io::Result<()>  {
+    let file_str = fileutils::read_file("data/set1-challenge7.txt")?;
+    let raw_bytes = base64::decode(&file_str.replace('\n', "")).unwrap();
+
+    let key_str = "YELLOW SUBMARINE";
+    let key: &GenericArray<u8, U16> = GenericArray::from_slice(key_str.as_bytes());
+
+    let cipher = Aes128::new(key);
+    let mut ciphertext_block: GenericArray<u8, U16> = GenericArray::clone_from_slice(&[0u8; 16]);
+
+    let mut i = 0;
+    let mut decrypted_bytes: Vec<char> = vec![];
+    while i < raw_bytes.len() {
+        ciphertext_block = GenericArray::clone_from_slice(&raw_bytes[i..i+16]);
+        cipher.decrypt_block(&mut ciphertext_block);
+        for b in ciphertext_block {
+            decrypted_bytes.push(b as char);
+        }
+
+        i += 16;
+    }
+
+    let decrypted: String = decrypted_bytes.iter().collect();
+    println!("{}", decrypted);
 
     Ok(())
 }
