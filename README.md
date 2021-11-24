@@ -1,2 +1,2 @@
 # cryptopals
-Solutions for https://cryptopals.com/
+Rust solutions for https://cryptopals.com/
