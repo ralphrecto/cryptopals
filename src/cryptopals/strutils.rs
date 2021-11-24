@@ -20,5 +20,5 @@ fn test_hamming_dist() {
     let s2 = "wokka wokka!!!";
     let dist = hamming_dist(&s1.as_bytes().to_vec(), &s2.as_bytes().to_vec());
 
-    assert_eq!(38, dist);
+    assert_eq!(37, dist);
 }

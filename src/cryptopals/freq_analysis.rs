@@ -36,8 +36,19 @@ fn letter_freq(c: char) -> Option<f64> {
         '(' | ')' | '{' | '}' | '/' | '\\' | '|' | '<' | '>' |
         '[' | ']' | '+' | '=' | '_' | '*' | '&' | '%' | '$' |
         '@' | '#' | '\n' => Some(0.001),
-        _ => None
+        // TODO is this...fine?
+        _ => Some(0.001)
+        // _ => None
     }
+}
+
+fn count_chars(text: &str) -> HashMap<char, u32> {
+    let mut char_to_count: HashMap<char, u32> = HashMap::new();
+    for c in text.chars() {
+        *(char_to_count.entry(c).or_insert(0)) += 1;
+    }
+
+    char_to_count
 }
 
 /// Generate a xi^2 score for the given piece of English text, including spaces.
@@ -45,19 +56,7 @@ fn letter_freq(c: char) -> Option<f64> {
 /// the xi^2 score is returned in a Some.
 pub fn chi_square(text: &str) -> Option<f64> {
     let length: u32 = text.len() as u32;
-    let mut letter_to_count: HashMap<char, u32> = HashMap::new();
-    for c in text.chars() {
-        match letter_freq(c) {
-            Some(_) => {
-                *(letter_to_count.entry(c).or_insert(0)) += 1;
-            },
-            None => {
-                // println!("no match for {}", c);
-                return None
-            }
-        }
-    }
-
+    let letter_to_count = count_chars(text);
     let res: f64 = letter_to_count.iter()
         .map(|(&c, &count)| -> f64 {
             // E[number of occurrences of c]
@@ -69,4 +68,14 @@ pub fn chi_square(text: &str) -> Option<f64> {
         }).sum();
 
     Some(res)
+}
+
+pub fn space_freq(text: &str) -> f64 {
+    let char_count = count_chars(text);
+    let space_count = match char_count.get(&' ') {
+        Some(count) => *count,
+        None => 0
+    };
+
+    -(space_count as f64 / text.len() as f64)
 }

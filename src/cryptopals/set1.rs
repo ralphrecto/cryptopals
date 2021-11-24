@@ -69,55 +69,96 @@ pub fn challenge5() -> () {
 }
 
 pub fn challenge6() -> io::Result<()> {
-    const NUM_TOP_KEYSIZES: usize = 5;
+    const MIN_KEYSIZE: usize = 2;
+    const MAX_KEYSIZE: usize = 40;
+    const NUM_TOP_KEYSIZES: usize = 1;
     let ciphertext= fileutils::read_file("data/set1-challenge6.txt")?;
-    let decoded = base64::decode(&ciphertext.replace('\n', "")).unwrap();
+    let raw_bytes = base64::decode(&ciphertext.replace('\n', "")).unwrap();
 
-    let mut keysize_scores: Vec<(i32, f64)> = Vec::with_capacity(40);
-    for keysize in 2..=40 {
-        let block1 = &decoded[0..keysize];
-        let block2 = &decoded[keysize..keysize*2];
+    // Part 1: find the most probable key size/s.
+    let mut keysize_scores: Vec<(i32, f64)> = Vec::with_capacity(MAX_KEYSIZE);
+    for keysize in MIN_KEYSIZE..=MAX_KEYSIZE {
+        let mut i = 0;
+        let mut hamming_dist_sum = 0.0;
+        let mut num_pairs = 0;
 
-        let d = hamming_dist(&block1.to_vec(), &block2.to_vec());
+        // NOTE: this loop implements step 3 of the problem.
+        // The text of the step says to only do the first and second keysize worth
+        // of bytes, but this is actually not sufficient; the keysizes found using
+        // that method produce garbage. Here we take the normalized hamming distances
+        // for all consecutive pairs of blocks for the WHOLE input.
+        while i + (keysize*2) < raw_bytes.len() {
+            let block1 = &raw_bytes[i..i+keysize];
+            let block2 = &raw_bytes[i+keysize..i+(keysize*2)];
 
-        let normalized_d = d as f64 / keysize as f64;
-        keysize_scores.push((keysize as i32, normalized_d));
+            let d = hamming_dist(&block1.to_vec(), &block2.to_vec());
+            let normalized_d = d as f64 / keysize as f64;
+
+            hamming_dist_sum += normalized_d;
+            num_pairs += 1;
+            i += keysize*2;
+        }
+
+        let keysize_score = hamming_dist_sum / num_pairs as f64;
+        keysize_scores.push((keysize as i32, keysize_score));
     }
-
     keysize_scores.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-
     let top_keysizes = &keysize_scores[0..NUM_TOP_KEYSIZES];
 
-    // keysize -> block num -> decoded bytes
+    // Part 2: generate transposed blocks.
+    // keysize -> block num -> raw bytes
     let mut transposed_blocks: HashMap<i32, HashMap<i32, Vec<u8>>> = HashMap::new();
     for (probable_keysize, _) in top_keysizes {
-        transposed_blocks.insert(*probable_keysize, HashMap::new());
+        let keysize_map = transposed_blocks
+            .entry(*probable_keysize)
+            .or_insert_with(HashMap::new);
 
-        let keysize_map = transposed_blocks.get_mut(probable_keysize).unwrap();
-        for i in 0..decoded.len() {
+        for i in 0..raw_bytes.len() {
             let block_i = i as i32 % *probable_keysize;
-            if !keysize_map.contains_key(&block_i) {
-                keysize_map.insert(block_i, vec![]);
-            }
+            let block = keysize_map
+                .entry(block_i)
+                .or_insert_with(|| vec![]);
 
-            let block = keysize_map.get_mut(&block_i).unwrap();
-            block.push(decoded[i]);
+            block.push(raw_bytes[i]);
         }
     }
 
+    // Part 3: generate most likely byte key for each transposed block.
+    let mut cand_keys: HashMap<i32, Vec<u8>> = HashMap::new();
     for (keysize, keysize_map) in transposed_blocks {
+        let mut key: Vec<u8> = vec![0; keysize as usize];
+
         for (block_i, block) in keysize_map {
             let keygen_pairs = xorutils::bytexor_keygen(&block);
+
+            let mut min_keybyte: u8 = 0;
+            let mut min_score: f64 = f64::MAX;
+
             for (plaintext, keybyte) in keygen_pairs {
-                // println!("plaintext: {}", &plaintext);
-                match freq_analysis::chi_square(&plaintext) {
-                    Some(chi_sq) => println!("keybyte {}, chi sq {}", keybyte, chi_sq),
-                    None => {
-                        // println!("None!") // The decoded string isn't even english, so this is not the key
-                    }
+                let score = match freq_analysis::chi_square(&plaintext) {
+                    Some(chi_sq) => chi_sq,
+                    None => f64::MAX
+                };
+
+                if score < min_score {
+                    min_score = score;
+                    min_keybyte = keybyte;
                 }
             }
+
+            key[block_i as usize] = min_keybyte;
         }
+
+        cand_keys.insert(keysize, key);
+    }
+
+    for (_, key) in cand_keys {
+        let unencrypted: String = xorutils::rolling_xor(&raw_bytes, &key)
+            .iter()
+            .map(|byte| *byte as char)
+            .collect();
+
+        println!("key {:?}, unencrypted: {}", key, unencrypted);
     }
 
     Ok(())
